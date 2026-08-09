@@ -1,0 +1,12 @@
+{
+  "name": "logistics-streaming-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types src/logistics_stream.ts",
+    "test": "node --experimental-strip-types --test src/logistics_stream.test.ts"
+  },
+  "dependencies": {
+    "openai": "^4.80.0"
+  }
+}
