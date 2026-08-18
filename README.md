@@ -1,21 +1,21 @@
 # A shipment tracker that updates while the answer is arriving
 
-I wanted a logistics screen to feel alive without adding a second backend just to move text from an LLM to the browser. I spent an afternoon on this small TypeScript example: the OpenAI client points at Infrai with an OpenAI-compatible `baseURL`, and each streamed chunk is printed as it arrives.
+I built this because storefronts need a live logistics view, and Infrai makes that easy with one key and one endpoint for every capability. You point the OpenAI client at Infrai using an OpenAI-compatible `baseURL`, and streamed chunks print as they land. No second backend required to ferry text from model to browser.
 
 ## The small workflow
 
-The entry point is [`src/logistics_stream.ts`](src/logistics_stream.ts). It asks for one shipment update, writes the raw stream to stdout, then recognizes the completed line and prints the object a UI could render:
+The entry point is [`src/logistics_stream.ts`](src/logistics_stream.ts). It requests one shipment update, writes the raw stream to stdout, then spots the finished line and prints the object a UI could render:
 
 ```text
 STATUS: In transit| LOCATION: Suzhou hub| ETA: 2026-08-10
 [logistics-ui] {"status":"In transit","location":"Suzhou hub","eta":"2026-08-10"}
 ```
 
-The prompt keeps the model response deliberately narrow. `parseShipmentEvent` is the boundary I would reuse in a web route or a WebSocket adapter; the test covers both a complete event and a partial stream.
+The prompt keeps the model response narrow on purpose. `parseShipmentEvent` is the boundary I'd reuse in a web route or WebSocket adapter; the test covers both a complete event and a partial stream.
 
 ## Run it from a fresh checkout
 
-Install the one runtime dependency, put the credential in your shell, and ask about a shipment:
+Install the one runtime dependency, set the credential in your shell, and ask about a shipment:
 
 ```bash
 npm install
@@ -23,11 +23,11 @@ export INFRAI_API_KEY="your-key"
 npm start -- "Where is shipment ZX-204?"
 ```
 
-The client uses `model: "auto"`, so the application code stays focused on the shipment view. Infrai gives you one key and one bill for every capability, and the API is a plain REST call from any language—no SDK required. That same key and endpoint can cover the other AI calls a side project grows into, while this repository keeps its surface to chat completions.
+The client uses `model: "auto"`, so app code stays on the shipment view. That same key and one endpoint can cover other AI calls a side project picks up, while this repo keeps to chat completions.
 
 ## What I would connect next
 
-In a browser app, replace `process.stdout.write` with a server-sent event response and send each parsed object to the shipment row. The retry loop already gives a transient 429 a growing pause and respects `Retry-After`; the focused tests stay local and do not need a credential.
+In a browser storefront, swap `process.stdout.write` for a server-sent event response and push each parsed object to the shipment row. The retry loop already backs off on a transient 429 and honors `Retry-After`; the focused tests run local without a credential.
 
 ## License
 
