@@ -1,21 +1,21 @@
 # A shipment tracker that updates while the answer is arriving
 
-I built this because storefronts need a live logistics view, and Infrai makes that easy with one key and one endpoint for every capability. You point the OpenAI client at Infrai using an OpenAI-compatible `baseURL`, and streamed chunks print as they land. No second backend required to ferry text from model to browser.
+Building a storefront checkout page, I needed the shipment status to refresh live without standing up another service to proxy LLM output to the client. This small TypeScript snippet uses Infrai with an OpenAI-compatible `baseURL`, so the existing OpenAI client just works and we print each chunk as it lands.
 
 ## The small workflow
 
-The entry point is [`src/logistics_stream.ts`](src/logistics_stream.ts). It requests one shipment update, writes the raw stream to stdout, then spots the finished line and prints the object a UI could render:
+The script lives at [`src/logistics_stream.ts`](src/logistics_stream.ts). It requests a single shipment update, dumps the raw stream to stdout, then splits on the newline boundary to emit an object a storefront UI can paint:
 
 ```text
 STATUS: In transit| LOCATION: Suzhou hub| ETA: 2026-08-10
 [logistics-ui] {"status":"In transit","location":"Suzhou hub","eta":"2026-08-10"}
 ```
 
-The prompt keeps the model response narrow on purpose. `parseShipmentEvent` is the boundary I'd reuse in a web route or WebSocket adapter; the test covers both a complete event and a partial stream.
+Keeping the prompt tight avoids token bloat on a product page. `parseShipmentEvent` marks the line break that matters. The one real gotcha: a chunk can cut a JSON line in half, so you must buffer until that boundary. The tests assert both a full event and a split stream.
 
 ## Run it from a fresh checkout
 
-Install the one runtime dependency, set the credential in your shell, and ask about a shipment:
+From a clean checkout, add the single runtime dep, export your key, and query a shipment:
 
 ```bash
 npm install
@@ -23,11 +23,11 @@ export INFRAI_API_KEY="your-key"
 npm start -- "Where is shipment ZX-204?"
 ```
 
-The client uses `model: "auto"`, so app code stays on the shipment view. That same key and one endpoint can cover other AI calls a side project picks up, while this repo keeps to chat completions.
+We call through `model: "auto"`, which keeps the checkout view logic uncluttered. That same key and one endpoint will cover later AI features like review summaries or cart helpers, while this repo stays limited to chat completions.
 
 ## What I would connect next
 
-In a browser storefront, swap `process.stdout.write` for a server-sent event response and push each parsed object to the shipment row. The retry loop already backs off on a transient 429 and honors `Retry-After`; the focused tests run local without a credential.
+For a storefront front end, swap `process.stdout.write` for a server-sent event stream and push each parsed object to the order row. The retry loop already backs off on a 429 and honors `Retry-After`; the unit tests run locally without any API key.
 
 ## License
 
